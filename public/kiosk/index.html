@@ -156,12 +156,11 @@
         <img id="k-qr" alt="Kode QR absensi kiosk" hidden>
       </div>
       <div class="rot">
-        <div class="rot-bar"><div class="rot-fill" id="k-rot"></div></div>
-        <div class="rot-txt" id="k-rot-t">Memuat…</div>
+        <div class="rot-txt" id="k-rot-t" style="font-size:0.95rem;color:#a5b4fc">📅 Kode QR Resmi Hari Ini</div>
       </div>
       <div class="qr-note" id="k-note">
         Buka aplikasi <b>Absensi</b> → tekan tombol <b>Pindai QR</b> → arahkan ke kode ini.<br>
-        Kode berganti otomatis setiap <b>60 detik</b>, jadi hasil tangkapan layar tidak dapat dipakai ulang.
+        Scan pertama untuk <b>Absen Masuk</b>, scan kedua untuk <b>Absen Pulang</b>.
       </div>
     </div>
   </main>
@@ -225,21 +224,13 @@
     document.getElementById('k-radius').textContent = (j.radius || 120) + ' m';
     document.getElementById('k-logo').src = s.logo ? '/api/assets/logo.svg' : '/api/assets/default-logo.svg';
     document.title = 'Kios Absensi — ' + (s.school_name || sc.name || 'Sekolah');
-    if (j.rotate_seconds) {
-      state.rotate = j.rotate_seconds;
-      document.getElementById('k-note').innerHTML =
-        'Buka aplikasi <b>Absensi</b> → tekan tombol <b>Pindai QR</b> → arahkan ke kode ini.<br>' +
-        'Kode berganti otomatis setiap <b>' + esc(j.rotate_seconds) + ' detik</b>, ' +
-        'jadi hasil tangkapan layar tidak dapat dipakai ulang.';
-    }
   }
 
   /* --------------------------- the single QR --------------------------- */
   function paintRotation() {
-    var left = Math.max(0, (state.expiresAt - Date.now()) / 1000);
-    var pct = Math.max(0, Math.min(1, left / state.rotate));
-    document.getElementById('k-rot').style.transform = 'scaleX(' + pct.toFixed(3) + ')';
-    document.getElementById('k-rot-t').textContent = 'Kode berganti dalam ' + Math.ceil(left) + ' dtk';
+    // QR Harian aktif sepanjang hari
+    var el = document.getElementById('k-rot-t');
+    if (el) el.textContent = '📅 Kode QR Resmi Hari Ini';
   }
 
   function renderQR() {

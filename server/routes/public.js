@@ -10,13 +10,13 @@ const auth = require('../auth');
 const router = express.Router();
 
 /**
- * Kiosk QR rotation. The code is minted from a 60-second time slot and signed
- * with the app secret, so a photo or a screenshot of the screen is worthless
- * one minute later. The previous slot stays valid as a small grace window for
- * a code that was rendered just before the rollover.
+ * Kiosk QR rotation. The code is minted per calendar date (server timezone, e.g. WIB)
+ * and signed with the app secret. One code serves both check-in & check-out for the
+ * whole day, and automatically rolls over at midnight (server date).
  */
-const KIOSK_SLOT_MS = 60 * 1000;
-const KIOSK_GRACE_SLOTS = 1;
+function todayDateStr() {
+  return attendance.today();
+}
 
 function school() {
   return db.findOne('schools', (s) => s.id === 'school_default') || db.all('schools')[0] || null;
@@ -27,43 +27,26 @@ function schoolCode() {
   return String((s && s.code) || 'SCHOOL').toUpperCase();
 }
 
-/** The signed, self-expiring credential that the kiosk screen renders. */
-/**
- * The payload deliberately omits an issue time so that every kiosk renders
- * the *identical* code for the whole slot, and the code changes exactly on
- * the minute boundary.
- *
- * Two different deadlines matter here:
- *  - `expires_at` is when the screen rotates — purely cosmetic, drives the
- *    countdown on the kiosk.
- *  - the payload's `exp` is how long the code still *scans*. It runs to the
- *    end of the grace window, because `U.verify` rejects on `exp`. Keeping
- *    the two equal silently killed the grace window: a code rendered at
- *    second 58 of a slot stopped working two seconds later, which is exactly
- *    when a slow connection needs that grace.
- */
-function kioskToken(now) {
-  const t = now || Date.now();
-  const slot = Math.floor(t / KIOSK_SLOT_MS);
-  const expiresAt = (slot + 1) * KIOSK_SLOT_MS;
-  const validUntil = expiresAt + KIOSK_GRACE_SLOTS * KIOSK_SLOT_MS;
+/** The signed credential that the kiosk screen renders for today. */
+function kioskToken() {
+  const dateStr = todayDateStr();
+  // Valid until end of the calendar day + 6 hours grace window
+  const exp = Date.now() + 30 * 3600 * 1000;
   return {
-    token: U.sign({ v: 1, k: 'kiosk', s: schoolCode(), slot, exp: validUntil }),
-    slot,
-    issued_at: new Date(slot * KIOSK_SLOT_MS).toISOString(),
-    expires_at: new Date(expiresAt).toISOString(),
-    valid_until: new Date(validUntil).toISOString(),
+    token: U.sign({ v: 1, k: 'kiosk', s: schoolCode(), date: dateStr, exp }),
+    date: dateStr,
+    slot: dateStr,
+    issued_at: new Date().toISOString(),
+    expires_at: `${dateStr}T23:59:59.999Z`,
   };
 }
 
-/** Accept the current slot plus a short grace window (clock skew). */
+/** Accept the token matching today's date and valid signature. */
 function verifyKioskToken(token) {
   const p = U.verify(token);
   if (!p || p.k !== 'kiosk') return null;
   if (String(p.s || '').toUpperCase() !== schoolCode()) return null;
-  const slot = Math.floor(Date.now() / KIOSK_SLOT_MS);
-  if (typeof p.slot !== 'number') return null;
-  if (p.slot > slot || p.slot < slot - KIOSK_GRACE_SLOTS) return null;
+  if (p.date !== todayDateStr()) return null;
   return p;
 }
 
@@ -168,12 +151,12 @@ router.get('/kiosk/token', (req, res) => {
   const st = attendance.settings();
   return U.ok(res, {
     token: k.token,
+    date: k.date,
     slot: k.slot,
     issued_at: k.issued_at,
     expires_at: k.expires_at,
-    ttl: Math.max(1, Math.ceil((new Date(k.expires_at).getTime() - Date.now()) / 1000)),
-    valid_until: k.valid_until,
-    rotate_seconds: KIOSK_SLOT_MS / 1000,
+    daily: true,
+    rotate_seconds: 86400,
     url: kioskUrl(req, k.token),
     school: { id: s.id, name: s.name, code: s.code, lat: s.lat, lng: s.lng },
     location: { lat: s.lat, lng: s.lng },
