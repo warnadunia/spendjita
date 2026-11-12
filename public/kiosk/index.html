@@ -13,109 +13,91 @@
     --ease:cubic-bezier(.16,1,.3,1);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%}
+  html,body{height:100%;margin:0;padding:0}
   body{
-    margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-    color:var(--ink-900);background:#0b1220;overflow:hidden;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    color:#fff;background:#0b1220;overflow:hidden;
   }
-  /* ------------------------------ shell ------------------------------- */
+  /* ------------------------------ stage ------------------------------- */
   .stage{
-    position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;
+    position:fixed;inset:0;display:flex;flex-direction:row;align-items:center;justify-content:space-between;
+    padding:clamp(16px, 3vh, 32px) clamp(24px, 4vw, 56px);gap:clamp(24px, 4vw, 64px);
     background:
       radial-gradient(900px 620px at 12% -10%, rgba(79,70,229,.36), transparent 60%),
       radial-gradient(760px 560px at 92% 8%, rgba(6,182,212,.26), transparent 62%),
       linear-gradient(160deg,#0b1220 0%,#111c33 55%,#0b1220 100%);
-    color:#fff;
   }
   .stage::after{
     content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
     background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);
-    background-size:26px 26px;
+    background-size:26px 26px;z-index:0;
   }
   .stage > *{position:relative;z-index:1}
 
-  /* ------------------------------ header ------------------------------ */
-  header{
-    display:flex;align-items:center;gap:18px;justify-content:space-between;
-    padding:clamp(14px,2.2vh,26px) clamp(18px,3vw,46px);
+  /* --------------------------- QR AREA (90% HEIGHT) --------------------------- */
+  .qr-section{
+    height:90vh;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    flex-shrink:0;max-width:calc(100vw - 380px);
   }
-  .brand{display:flex;align-items:center;gap:14px;min-width:0}
-  .brand img{width:clamp(38px,4.4vh,56px);height:clamp(38px,4.4vh,56px);object-fit:contain;flex:none;
-    background:rgba(255,255,255,.9);border-radius:14px;padding:5px}
-  .brand-name{font-size:clamp(1rem,2.1vh,1.5rem);font-weight:800;letter-spacing:-.02em;line-height:1.15}
-  .brand-sub{font-size:clamp(.68rem,1.15vh,.82rem);color:rgba(255,255,255,.62);margin-top:2px;font-weight:600}
-  .clock{text-align:right;flex:none}
-  .clock-t{font-size:clamp(1.5rem,4.4vh,3rem);font-weight:800;letter-spacing:-.03em;
-    font-variant-numeric:tabular-nums;line-height:1;text-shadow:0 6px 26px rgba(0,0,0,.4)}
-  .clock-d{font-size:clamp(.68rem,1.2vh,.88rem);color:rgba(255,255,255,.66);margin-top:6px;font-weight:600}
-  .live{display:inline-flex;align-items:center;gap:6px;font-size:.66rem;font-weight:800;
-    text-transform:uppercase;letter-spacing:.1em;color:#6ee7b7;margin-top:8px}
-  .live i{width:7px;height:7px;border-radius:99px;background:var(--ok);animation:pulse 1.8s infinite}
-  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.82)}}
-
-  /* ------------------------------ centre ------------------------------ */
-  main{display:grid;place-items:center;padding:0 clamp(18px,3vw,46px)}
-  .qr-wrap{
-    display:flex;flex-direction:column;align-items:center;gap:clamp(10px,2vh,20px);
-    width:100%;max-width:min(92vw, 62vh);
-  }
-  .qr-tag{
-    display:inline-flex;align-items:center;gap:9px;padding:8px 18px;border-radius:99px;
-    background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
-    font-size:clamp(.7rem,1.3vh,.9rem);font-weight:800;letter-spacing:.02em;
-    backdrop-filter:blur(10px);
-  }
-  .qr-tag b{color:#a5b4fc}
-
   .qr-card{
-    position:relative;width:100%;aspect-ratio:1/1;max-height:min(58vh,560px);
-    background:#fff;border-radius:clamp(18px,3vh,32px);padding:clamp(10px,1.7vh,20px);
-    box-shadow:0 40px 90px -20px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.14) inset;
+    position:relative;width:100%;height:100%;
+    background:#fff;border-radius:clamp(24px, 3.5vh, 40px);padding:clamp(14px, 2vh, 24px);
+    box-shadow:0 40px 100px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.18) inset;
     display:grid;place-items:center;overflow:hidden;
   }
   .qr-card img{
     width:100%;height:100%;object-fit:contain;display:block;
-    transition:filter .25s var(--ease), opacity .25s var(--ease), transform .35s var(--ease);
+    transition:filter .25s var(--ease), opacity .25s var(--ease);
   }
-  .qr-card img.stale{filter:grayscale(.4) blur(2px);opacity:.5;transform:scale(.985)}
-  .corner{position:absolute;width:30px;height:30px;border:3px solid var(--brand);opacity:.85}
-  .corner.tl{top:12px;left:12px;border-right:0;border-bottom:0;border-radius:10px 0 0 0}
-  .corner.tr{top:12px;right:12px;border-left:0;border-bottom:0;border-radius:0 10px 0 0}
-  .corner.bl{bottom:12px;left:12px;border-right:0;border-top:0;border-radius:0 0 0 10px}
-  .corner.br{bottom:12px;right:12px;border-left:0;border-top:0;border-radius:0 0 10px 0}
+  .corner{position:absolute;width:40px;height:40px;border:5px solid var(--brand);opacity:.85}
+  .corner.tl{top:14px;left:14px;border-right:0;border-bottom:0;border-radius:14px 0 0 0}
+  .corner.tr{top:14px;right:14px;border-left:0;border-bottom:0;border-radius:0 14px 0 0}
+  .corner.bl{bottom:14px;left:14px;border-right:0;border-top:0;border-radius:0 0 0 14px}
+  .corner.br{bottom:14px;right:14px;border-left:0;border-top:0;border-radius:0 0 14px 0}
   .qr-loading{
     position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-500);
-    font-size:.8rem;font-weight:700;background:#fff;
+    font-size:.9rem;font-weight:700;background:#fff;
   }
-  .spinner{width:24px;height:24px;border-radius:99px;border:3px solid var(--ink-200);
+  .spinner{width:36px;height:36px;border-radius:99px;border:4px solid var(--ink-200);
     border-top-color:var(--brand);animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  /* countdown ring under the QR */
-  .rot{display:flex;align-items:center;gap:12px;width:100%;justify-content:center}
-  .rot-bar{position:relative;width:min(46vw,340px);height:6px;border-radius:99px;
-    background:rgba(255,255,255,.16);overflow:hidden}
-  .rot-fill{position:absolute;inset:0;transform-origin:left;
-    background:linear-gradient(90deg,var(--brand-2),var(--brand));
-    transition:transform .9s linear}
-  .rot-txt{font-size:clamp(.66rem,1.15vh,.8rem);font-weight:800;color:rgba(255,255,255,.72);
-    font-variant-numeric:tabular-nums;white-space:nowrap}
-  .qr-note{
-    text-align:center;font-size:clamp(.7rem,1.25vh,.88rem);color:rgba(255,255,255,.66);
-    line-height:1.6;max-width:52ch
+  /* --------------------------- SIDEBAR PANEL --------------------------- */
+  .side-panel{
+    flex:1;height:90vh;display:flex;flex-direction:column;justify-content:space-between;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+    backdrop-filter:blur(16px);border-radius:clamp(20px, 3vh, 32px);padding:clamp(20px, 3vh, 36px);
+    box-shadow:0 30px 60px rgba(0,0,0,.3);min-width:300px;
   }
-  .qr-note b{color:#fff}
 
-  /* ------------------------------ footer ------------------------------ */
-  footer{
-    display:flex;align-items:center;justify-content:center;gap:clamp(10px,2vw,26px);flex-wrap:wrap;
-    padding:clamp(12px,2vh,22px) clamp(18px,3vw,46px);
-    font-size:clamp(.66rem,1.1vh,.8rem);color:rgba(255,255,255,.55);font-weight:600;
-    border-top:1px solid rgba(255,255,255,.09);
+  .brand{display:flex;align-items:center;gap:16px}
+  .brand img{width:64px;height:64px;object-fit:contain;flex:none;
+    background:rgba(255,255,255,.95);border-radius:18px;padding:6px;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+  .brand-name{font-size:clamp(1.2rem,2.4vh,1.65rem);font-weight:800;letter-spacing:-.02em;line-height:1.2}
+  .brand-sub{font-size:.85rem;color:rgba(255,255,255,.65);margin-top:3px;font-weight:600}
+
+  .clock-block{margin:auto 0;padding:24px 0}
+  .clock-t{font-size:clamp(2.5rem,5.5vh,4rem);font-weight:900;letter-spacing:-.03em;
+    font-variant-numeric:tabular-nums;line-height:1;text-shadow:0 8px 30px rgba(0,0,0,.5);color:#fff}
+  .clock-d{font-size:clamp(.9rem,1.7vh,1.15rem);color:#cbd5e1;margin-top:10px;font-weight:700}
+
+  .tag-rule{
+    display:inline-flex;align-items:center;gap:10px;padding:10px 18px;border-radius:14px;
+    background:rgba(79,70,229,.24);border:1px solid rgba(165,180,252,.35);
+    font-size:clamp(.85rem,1.5vh,1rem);font-weight:800;color:#c7d2fe;margin-bottom:14px;
   }
-  footer .fitem{display:inline-flex;align-items:center;gap:7px}
-  footer .dot{width:5px;height:5px;border-radius:99px;background:rgba(255,255,255,.28)}
-  footer b{color:rgba(255,255,255,.82)}
+  .instruct{
+    font-size:clamp(.82rem,1.4vh,.95rem);color:rgba(255,255,255,.8);line-height:1.6;
+    background:rgba(0,0,0,.22);padding:14px 18px;border-radius:16px;border:1px solid rgba(255,255,255,.07);
+  }
+  .instruct b{color:#38bdf8}
+
+  .foot-meta{
+    display:flex;flex-direction:column;gap:8px;font-size:.8rem;color:rgba(255,255,255,.55);
+    border-top:1px solid rgba(255,255,255,.1);padding-top:16px;
+  }
+  .foot-item{display:flex;align-items:center;gap:8px}
+  .foot-item b{color:#fff}
 
   /* ------------------------------ fatal ------------------------------- */
   .fatal{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:#0b1220;color:#fff;
@@ -123,57 +105,58 @@
   .fatal.active{display:grid}
   .fatal h2{font-size:1.15rem;margin:0 0 8px}
 
-  @media (max-height:520px){
-    .qr-card{max-height:64vh}
-    .brand-sub,.clock-d{display:none}
+  /* Responsive layout for smaller tablet portrait */
+  @media (max-aspect-ratio: 1/1), (max-width: 820px) {
+    .stage{flex-direction:column;justify-content:center;gap:16px;padding:14px;overflow-y:auto}
+    .qr-section{height:60vh;max-width:92vw}
+    .side-panel{height:auto;width:100%;min-width:unset;padding:18px}
+    .clock-block{padding:12px 0}
   }
 </style>
 </head>
 <body>
 <div class="stage" id="stage">
-  <header>
+  <!-- QR CODE 90% SCREEN HEIGHT -->
+  <div class="qr-section">
+    <div class="qr-card" id="k-card">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <div class="qr-loading" id="k-loading"><span class="spinner"></span></div>
+      <img id="k-qr" alt="Kode QR absensi kiosk" hidden>
+    </div>
+  </div>
+
+  <!-- SIDEBAR PANEL: KETERANGAN DI SAMPING -->
+  <div class="side-panel">
     <div class="brand">
       <img id="k-logo" src="/api/assets/default-logo.svg" alt="Logo">
       <div style="min-width:0">
-        <div class="brand-name" id="k-name">Sekolah</div>
+        <div class="brand-name" id="k-name">SMP Negeri 1 Yogyakarta</div>
         <div class="brand-sub" id="k-sub">Sistem Absensi Digital</div>
       </div>
     </div>
-    <div class="clock">
+
+    <div class="clock-block">
       <div class="clock-t" id="k-time">--:--:--</div>
       <div class="clock-d" id="k-date">—</div>
-      <div class="live"><i></i> Kode QR dinamis</div>
     </div>
-  </header>
 
-  <main>
-    <div class="qr-wrap">
-      <div class="qr-tag">📥📤 <b>Satu kode</b> untuk absen masuk &amp; pulang</div>
-      <div class="qr-card" id="k-card">
-        <span class="corner tl"></span><span class="corner tr"></span>
-        <span class="corner bl"></span><span class="corner br"></span>
-        <div class="qr-loading" id="k-loading"><span class="spinner"></span></div>
-        <img id="k-qr" alt="Kode QR absensi kiosk" hidden>
-      </div>
-      <div class="rot">
-        <div class="rot-txt" id="k-rot-t" style="font-size:0.95rem;color:#a5b4fc">📅 Kode QR Resmi Hari Ini</div>
-      </div>
-      <div class="qr-note" id="k-note">
-        Buka aplikasi <b>Absensi</b> → tekan tombol <b>Pindai QR</b> → arahkan ke kode ini.<br>
-        Scan pertama untuk <b>Absen Masuk</b>, scan kedua untuk <b>Absen Pulang</b>.
+    <div>
+      <div class="tag-rule">📥📤 Satu Kode Masuk &amp; Pulang</div>
+      <div class="instruct">
+        Arahkan kamera ke kode QR di samping.<br>
+        • Scan 1× untuk <b>Absen Masuk</b><br>
+        • Scan 2× untuk <b>Absen Pulang</b><br>
+        <span style="font-size:0.8rem;color:#94a3b8;display:inline-block;margin-top:6px">📅 Kode QR resmi &amp; berlaku sepanjang hari ini</span>
       </div>
     </div>
-  </main>
 
-  <footer>
-    <span class="fitem" id="k-foot-name">Sekolah</span>
-    <span class="dot"></span>
-    <span class="fitem" id="k-foot-addr">—</span>
-    <span class="dot"></span>
-    <span class="fitem">GPS Lock radius <b id="k-radius">—</b></span>
-    <span class="dot"></span>
-    <span class="fitem">Diperbarui <b id="k-refresh">—</b></span>
-  </footer>
+    <div class="foot-meta">
+      <div class="foot-item">📍 <span id="k-foot-addr">Jalan Cik Di Tiro No.29, Yogyakarta</span></div>
+      <div class="foot-item">🎯 Radius GPS: <b id="k-radius">120 m</b></div>
+      <div class="foot-item">🕒 Terakhir disinkronkan: <b id="k-refresh">—</b></div>
+    </div>
+  </div>
 </div>
 
 <div class="fatal" id="k-fatal" style="display:none">
@@ -192,14 +175,9 @@
   var DAYS = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
   var MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   var OFF = 420; // WIB
-  var state = { token: '', slot: -1, expiresAt: 0, rotate: 60, loading: true, fatal: false, misses: 0 };
+  var state = { token: '', slot: -1, fatal: false, misses: 0 };
 
   function pad(n) { return String(n).padStart(2, '0'); }
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
-    });
-  }
 
   /* ------------------------------- clock ------------------------------ */
   function tickClock() {
@@ -215,24 +193,15 @@
     var s = j.settings || {}, sc = j.school || {};
     if (s.theme_primary) document.documentElement.style.setProperty('--brand', s.theme_primary);
     if (s.theme_accent) document.documentElement.style.setProperty('--accent', s.theme_accent);
-    var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta && s.theme_primary) meta.setAttribute('content', s.theme_primary);
     document.getElementById('k-name').textContent = s.school_name || sc.name || 'Sekolah';
     document.getElementById('k-sub').textContent = s.app_tagline || 'Sistem Absensi Digital';
-    document.getElementById('k-foot-name').textContent = s.school_name || sc.name || 'Sekolah';
     document.getElementById('k-foot-addr').textContent = s.school_address || sc.address || '';
     document.getElementById('k-radius').textContent = (j.radius || 120) + ' m';
     document.getElementById('k-logo').src = s.logo ? '/api/assets/logo.svg' : '/api/assets/default-logo.svg';
     document.title = 'Kios Absensi — ' + (s.school_name || sc.name || 'Sekolah');
   }
 
-  /* --------------------------- the single QR --------------------------- */
-  function paintRotation() {
-    // QR Harian aktif sepanjang hari
-    var el = document.getElementById('k-rot-t');
-    if (el) el.textContent = '📅 Kode QR Resmi Hari Ini';
-  }
-
+  /* --------------------------- render QR --------------------------- */
   function renderQR() {
     var img = document.getElementById('k-qr');
     var l = document.getElementById('k-loading');
@@ -247,15 +216,11 @@
     img.onerror = function () {
       if (l) l.innerHTML = '<span style="color:#ef4444;font-size:0.85rem">Gagal memuat gambar QR</span>';
     };
-    img.src = '/api/public/kiosk/qr.svg?size=720&t=' + Date.now();
+    img.src = '/api/public/kiosk/qr.svg?size=1000&t=' + Date.now();
     document.getElementById('k-refresh').textContent =
       new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
-  /**
-   * Poll the rotating credential. The QR is only re-rendered when the slot
-   * actually rolls over, so the screen does not flicker every second.
-   */
   function clearFatal() {
     if (!state.fatal) return;
     state.fatal = false;
@@ -283,17 +248,7 @@
     if (st) st.style.filter = 'blur(4px)';
   }
 
-  /**
-   * Poll the rotating credential. One dropped request is not an outage, so the
-   * fatal screen only appears after several consecutive misses — and it is
-   * cleared again the moment a poll succeeds.
-   */
   async function pollToken() {
-    if (location.protocol === 'file:') {
-      showFatal('Halaman ini dibuka langsung dari berkas, bukan dari server. '
-        + 'Buka kiosk melalui alamat aplikasi (mis. http://<server>:3000/kiosk/).');
-      return;
-    }
     try {
       var r = await fetch('/api/public/kiosk/token', { headers: { Accept: 'application/json' }, cache: 'no-store' });
       if (!r.ok) throw new Error('Server HTTP ' + r.status);
@@ -301,8 +256,6 @@
       if (!j.ok || !j.data) throw new Error(j.error || 'Data sekolah belum tersedia.');
       var d = j.data;
       applyBrand(d);
-      state.expiresAt = new Date(d.expires_at).getTime();
-      state.rotate = d.rotate_seconds || 60;
       if (d.slot !== state.slot) {
         state.slot = d.slot;
         state.token = d.token;
@@ -312,7 +265,6 @@
       clearFatal();
     } catch (e) {
       state.misses++;
-      // Jangan tampilkan fatal screen kecuali benar-benar gagal terus menerus (> 5 kali)
       if (state.misses >= 6) {
         showFatal((e && e.message ? e.message : 'Koneksi ke server terputus.')
           + ' (' + state.misses + '× mencoba menghubungkan kembali...)');
@@ -324,17 +276,13 @@
   (function boot() {
     tickClock();
     setInterval(tickClock, 1000);
-    setInterval(paintRotation, 250);
-    // Panggil token dan render QR satu kali
     pollToken();
     renderQR();
-
-    // Karena QR harian (1x per hari), cek token cukup setiap 5 menit saja
+    // Refresh tiap 5 menit untuk pergantian tanggal
     setInterval(pollToken, 5 * 60 * 1000);
 
-    // Re-render on demand (tap) — handy while testing.
     document.addEventListener('click', function () { renderQR(); });
-    // Keep the screen awake on kiosk tablets when the browser allows it.
+
     if (navigator.wakeLock && navigator.wakeLock.request) {
       navigator.wakeLock.request('screen').catch(function () {});
       document.addEventListener('visibilitychange', function () {
