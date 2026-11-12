@@ -118,8 +118,9 @@
   footer b{color:rgba(255,255,255,.82)}
 
   /* ------------------------------ fatal ------------------------------- */
-  .fatal{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:#0b1220;color:#fff;
+  .fatal{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:#0b1220;color:#fff;
     padding:28px;text-align:center}
+  .fatal.active{display:grid}
   .fatal h2{font-size:1.15rem;margin:0 0 8px}
 
   @media (max-height:520px){
@@ -176,7 +177,7 @@
   </footer>
 </div>
 
-<div class="fatal" id="k-fatal" hidden>
+<div class="fatal" id="k-fatal" style="display:none">
   <div>
     <div style="font-size:2.4rem;margin-bottom:10px">📶</div>
     <h2>Tidak dapat memuat data sekolah</h2>
@@ -262,15 +263,28 @@
   function clearFatal() {
     if (!state.fatal) return;
     state.fatal = false;
-    document.getElementById('k-fatal').hidden = true;
-    document.getElementById('stage').style.filter = '';
+    var el = document.getElementById('k-fatal');
+    if (el) {
+      el.hidden = true;
+      el.classList.remove('active');
+      el.style.display = 'none';
+    }
+    var st = document.getElementById('stage');
+    if (st) st.style.filter = '';
   }
 
   function showFatal(msg) {
     state.fatal = true;
-    document.getElementById('k-fatal-msg').textContent = msg;
-    document.getElementById('k-fatal').hidden = false;
-    document.getElementById('stage').style.filter = 'blur(4px)';
+    var txt = document.getElementById('k-fatal-msg');
+    if (txt) txt.textContent = msg;
+    var el = document.getElementById('k-fatal');
+    if (el) {
+      el.hidden = false;
+      el.classList.add('active');
+      el.style.display = 'grid';
+    }
+    var st = document.getElementById('stage');
+    if (st) st.style.filter = 'blur(4px)';
   }
 
   /**
