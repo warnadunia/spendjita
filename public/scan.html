@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#4f46e5">
+<title>Absensi — Pindai Kode QR</title>
+<link rel="icon" href="/api/assets/default-logo.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--brand:#4f46e5;--accent:#f59e0b;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--ok:#16a34a;--danger:#dc2626;--radius:20px}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--ink);
+    background:linear-gradient(170deg,#4f46e5 0%,#6d28d9 42%,#0ea5e9 130%) fixed;
+    display:flex;align-items:flex-start;justify-content:center;padding:18px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .phone{width:100%;max-width:430px;margin:auto 0}
+  .card{
+    background:#fff;border-radius:26px;box-shadow:0 26px 60px rgba(2,6,23,.34);
+    overflow:hidden;animation:pop .38s cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes pop{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+  .head{
+    background:linear-gradient(140deg,#4f46e5,#7c3aed);color:#fff;padding:22px;text-align:center;position:relative;overflow:hidden;
+  }
+  .head::after{content:'';position:absolute;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.10);top:-120px;right:-80px}
+  .head > *{position:relative;z-index:1}
+  .head img{width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.18);object-fit:cover}
+  .head h1{font-size:1.12rem;font-weight:800;margin-top:10px;letter-spacing:-.02em}
+  .head p{font-size:.82rem;opacity:.9;margin-top:4px}
+  .mode{
+    display:inline-flex;align-items:center;gap:7px;margin-top:12px;
+    background:rgba(255,255,255,.22);padding:6px 14px;border-radius:99px;
+    font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;
+  }
+  .body{padding:20px}
+
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  .label{font-size:.78rem;font-weight:700;color:#334155}
+  .input{
+    width:100%;height:48px;padding:0 14px;border:1.5px solid var(--line);border-radius:14px;
+    font-size:1rem;background:#fff;color:var(--ink);transition:border-color .15s,box-shadow .15s;
+  }
+  .input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px rgba(79,70,229,.14)}
+  .btn{
+    width:100%;height:52px;border:none;border-radius:16px;background:var(--brand);color:#fff;
+    font-size:.98rem;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 10px 24px -8px rgba(79,70,229,.7);transition:transform .15s,filter .15s;
+  }
+  .btn:hover{filter:brightness(1.05)}
+  .btn:active{transform:translateY(1px)}
+  .btn[disabled]{opacity:.6;pointer-events:none}
+  .btn.ghost{background:#f1f5f9;color:#334155;box-shadow:none}
+
+  .geo{
+    display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:14px;
+    background:#f8fafc;border:1px solid var(--line);margin-bottom:14px;font-size:.84rem;
+  }
+  .geo .dot{width:11px;height:11px;border-radius:99px;background:#cbd5e1;flex:none}
+  .geo.ok{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
+  .geo.ok .dot{background:#16a34a}
+  .geo.bad{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
+  .geo.bad .dot{background:#dc2626}
+  .geo.warn{background:#fffbeb;border-color:#fde68a;color:#b45309}
+  .geo.warn .dot{background:#f59e0b}
+
+  .msg{padding:13px 15px;border-radius:14px;font-size:.86rem;font-weight:600;margin-bottom:14px;display:none;line-height:1.55}
+  .msg.show{display:block}
+  .msg.ok{background:#f0fdf4;color:#15803d}
+  .msg.err{background:#fef2f2;color:#b91c1c}
+  .msg.info{background:#eff6ff;color:#1d4ed8}
+
+  .user-chip{display:flex;align-items:center;gap:11px;padding:13px 14px;border-radius:14px;background:#eef2ff;margin-bottom:14px}
+  .user-chip .av{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:800;flex:none}
+  .foot{padding:14px 20px;background:#f8fafc;border-top:1px solid var(--line);text-align:center;font-size:.76rem;color:var(--muted)}
+  .spinner{width:17px;height:17px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hero-check{font-size:3.4rem;line-height:1;margin-bottom:6px}
+  .link{background:none;border:none;color:var(--brand);font-weight:700;font-size:.84rem;cursor:pointer;text-decoration:underline;padding:0}
+  .row-between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="card">
+    <div class="head">
+      <img id="s-logo" src="/api/assets/default-logo.svg" alt="Logo">
+      <h1 id="s-school">Sekolah</h1>
+      <p id="s-addr">—</p>
+      <div class="mode" id="s-mode">📥 Absen Masuk</div>
+    </div>
+
+    <div class="body" id="s-body">
+      <div class="msg" id="s-msg"></div>
+
+      <!-- STEP 1 — sign in -->
+      <div id="s-login">
+        <div class="field">
+          <label class="label" for="s-id">ID Pengguna</label>
+          <input class="input" id="s-id" placeholder="mis. SP1TA7A01" autocomplete="username" autocapitalize="characters" spellcheck="false">
+        </div>
+        <div class="field">
+          <label class="label" for="s-pass">Kata Sandi</label>
+          <input class="input" id="s-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;margin-bottom:16px;color:#334155">
+          <input type="checkbox" id="s-remember" checked style="width:17px;height:17px;accent-color:#4f46e5"> Ingat saya di perangkat ini
+        </label>
+        <button class="btn" id="s-login-btn">Masuk &amp; Lanjutkan</button>
+        <div style="text-align:center;margin-top:14px">
+          <button class="link" id="s-forgot">Lupa kata sandi?</button>
+        </div>
+      </div>
+
+      <!-- STEP 2 — confirm -->
+      <div id="s-confirm" style="display:none">
+        <div class="user-chip">
+          <span class="av" id="s-av">?</span>
+          <div style="min-width:0">
+            <div style="font-weight:800;font-size:.92rem" id="s-name">—</div>
+            <div style="font-size:.76rem;color:#64748b" id="s-meta">—</div>
+          </div>
+        </div>
+        <div class="geo" id="s-geo">
+          <span class="dot"></span>
+          <div class="grow" style="flex:1">
+            <div style="font-weight:700" id="s-geo-t">Mendeteksi lokasi…</div>
+            <div style="font-size:.76rem;opacity:.85" id="s-geo-d">Menautkan sinyal GPS perangkat</div>
+          </div>
+        </div>
+        <button class="btn" id="s-confirm-btn">
+          <span id="s-confirm-label">Konfirmasi Absen</span>
+        </button>
+        <button class="btn ghost" id="s-switch" style="margin-top:10px">Gunakan akun lain</button>
+      </div>
+
+      <!-- STEP 3 — done -->
+      <div id="s-done" style="display:none;text-align:center;padding:8px 0">
+        <div class="hero-check" id="s-done-ico">✅</div>
+        <h2 style="font-size:1.15rem;margin-bottom:6px" id="s-done-t">Berhasil</h2>
+        <p style="font-size:.88rem;color:#64748b;line-height:1.6" id="s-done-d">—</p>
+        <div style="margin-top:16px;padding:14px;border-radius:16px;background:#f8fafc;border:1px solid #e2e8f0">
+          <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;font-weight:800;margin-bottom:6px">Waktu tercatat</div>
+          <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.02em" id="s-done-time">--:--</div>
+          <div style="font-size:.78rem;color:#64748b;margin-top:3px" id="s-done-date">—</div>
+        </div>
+        <button class="btn ghost" id="s-again" style="margin-top:14px">Selesai</button>
+      </div>
+    </div>
+
+    <div class="foot">
+      Mengalami kendala? Hubungi <b id="s-phone">tata usaha sekolah</b>
+    </div>
+  </div>
+  <div style="text-align:center;color:rgba(255,255,255,.85);font-size:.76rem;margin-top:14px">
+    Kode QR ini berlaku dinamis selama Anda berada di dalam radius sekolah.
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var params=new URLSearchParams(location.search);
+  var mode=(params.get('mode')||'checkin').toLowerCase()==='checkout'?'checkout':'checkin';
+  var schoolCode=params.get('school')||'';
+  var schoolName=params.get('name')||'Sekolah';
+  var schoolLat=parseFloat(params.get('lat')||'0');
+  var schoolLng=parseFloat(params.get('lng')||'0');
+  // The kiosk encodes a rotating credential instead of a fixed direction.
+  var kioskToken=params.get('k')||'';
+  var OFF=420;
+  var state={ token:'', user:null, geo:null, radius:120, school:null };
+
+  var $=function(id){return document.getElementById(id);};
+  function pad(n){return String(n).padStart(2,'0');}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function initials(n){if(!n)return '?';var p=String(n).replace(/[^\p{L}\p{N} ]+/gu,' ').trim().split(/\s+/);return p.length===1?p[0].slice(0,2).toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
+  function hue(n){var h=0;for(var i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))>>>0;return h%360;}
+  function msg(text,kind){
+    var el=$('s-msg'); el.className='msg show '+(kind||'info'); el.innerHTML=text;
+  }
+  function clearMsg(){ $('s-msg').className='msg'; }
+  function fmtTime(iso){
+    if(!iso) return '--:--';
+    var d=new Date(iso); var s=new Date(d.getTime()+OFF*60000);
+    return pad(s.getUTCHours())+':'+pad(s.getUTCMinutes());
+  }
+  function fmtDate(iso){
+    var M=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    var D=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    var d=new Date(iso); var s=new Date(d.getTime()+OFF*60000);
+    return D[s.getUTCDay()]+', '+s.getUTCDate()+' '+M[s.getUTCMonth()]+' '+s.getUTCFullYear();
+  }
+  function dist(a,b,c,d){
+    var R=6371000,t=function(x){return x*Math.PI/180;};
+    var dLat=t(c-a),dLng=t(d-b);
+    var x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(t(a))*Math.cos(t(c))*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return 2*R*Math.asin(Math.min(1,Math.sqrt(x)));
+  }
+
+  /* ----------------------------- boot ----------------------------- */
+  $('s-mode').textContent = mode==='checkin' ? '📥 Absen Masuk' : '📤 Absen Pulang';
+  $('s-school').textContent = schoolName;
+  $('s-confirm-label').textContent = mode==='checkin' ? 'Konfirmasi Absen Masuk' : 'Konfirmasi Absen Pulang';
+
+  fetch('/api/public/school').then(function(r){return r.json();}).then(function(j){
+    if(j&&j.data){
+      var s=j.data.school, st=j.data.settings||{};
+      state.school=s; state.radius=st.checkin_radius_m||120;
+      $('s-school').textContent=st.school_name||s.name||schoolName;
+      $('s-addr').textContent=s.address||'';
+      $('s-phone').textContent=s.phone||'tata usaha sekolah';
+      if(st.logo) $('s-logo').src='/api/assets/logo.svg';
+      if(st.theme_primary){
+        document.documentElement.style.setProperty('--brand',st.theme_primary);
+        var m=document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content',st.theme_primary);
+      }
+    }
+  }).catch(function(){});
+
+  // restore a remembered session
+  try{
+    var saved=localStorage.getItem('sas.scan.session');
+    if(saved){ var o=JSON.parse(saved); if(o&&o.token&&o.user){ state.token=o.token; state.user=o.user; showConfirm(); } }
+  }catch(e){}
+
+  /* ---------------------------- login ---------------------------- */
+  $('s-login-btn').addEventListener('click', async function(){
+    clearMsg();
+    var id=$('s-id').value.trim();
+    var pw=$('s-pass').value;
+    if(!id||!pw) return msg('Mohon isi ID pengguna dan kata sandi.','err');
+    var btn=this; btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Memverifikasi…';
+    try{
+      var r=await fetch('/api/public/scan/login',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({idNumber:id,password:pw})
+      });
+      var j=await r.json();
+      if(!r.ok||!j.ok) throw new Error(j.error||'Login gagal');
+      state.token=j.data.token; state.user=j.data.user;
+      if($('s-remember').checked){
+        try{ localStorage.setItem('sas.scan.session',JSON.stringify({token:state.token,user:state.user})); }catch(e){}
+      }
+      showConfirm();
+    }catch(e){
+      btn.disabled=false; btn.textContent='Masuk & Lanjutkan';
+      msg(esc(e.message),'err');
+    }
+  });
+
+  $('s-pass').addEventListener('keydown',function(e){ if(e.key==='Enter') $('s-login-btn').click(); });
+  $('s-id').addEventListener('keydown',function(e){ if(e.key==='Enter') $('s-pass').focus(); });
+
+  $('s-forgot').addEventListener('click',function(){
+    var id=prompt('Masukkan ID pengguna Anda:');
+    if(!id) return;
+    fetch('/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idNumber:id})})
+      .then(function(r){return r.json();})
+      .then(function(j){
+        if(!j.ok) return msg(esc(j.error),'err');
+        var code=prompt('Kode pemulihan Anda (demo): '+j.data.token+'\n\nMasukkan kode 6 angka:');
+        if(!code) return;
+        var np=prompt('Kata sandi baru (minimal 6 karakter):');
+        if(!np) return;
+        return fetch('/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({idNumber:id,token:code,password:np})})
+          .then(function(r2){return r2.json();})
+          .then(function(j2){
+            if(!j2.ok) return msg(esc(j2.error),'err');
+            msg('Kata sandi berhasil diubah. Silakan masuk.','ok');
+          });
+      }).catch(function(e){ msg(esc(e.message),'err'); });
+  });
+
+  /* --------------------------- confirm ---------------------------- */
+  /**
+   * One kiosk code serves both directions: look at today's record and pick
+   * check-out when the member has already checked in.
+   */
+  async function resolveMode(){
+    if(!kioskToken) return;
+    try{
+      var r=await fetch('/api/mobile/status',{headers:{Authorization:'Bearer '+state.token}});
+      var j=await r.json();
+      var rec=j&&j.ok&&j.data?j.data.record:null;
+      mode=(rec&&rec.check_in_at&&!rec.check_out_at)?'checkout':'checkin';
+    }catch(e){ /* keep the mode derived from the URL */ }
+    $('s-mode').textContent = mode==='checkin'?'📥 Absen Masuk':'📤 Absen Pulang';
+    $('s-confirm-label').textContent = mode==='checkin'?'Konfirmasi Absen Masuk':'Konfirmasi Absen Pulang';
+  }
+
+  function showConfirm(){
+    $('s-login').style.display='none';
+    $('s-confirm').style.display='';
+    resolveMode();
+    var u=state.user;
+    $('s-av').textContent=initials(u.name);
+    $('s-av').style.background='hsl('+hue(u.name)+',65%,52%)';
+    $('s-name').textContent=u.name;
+    $('s-meta').textContent=({admin:'Administrator',teacher:'Guru',student:'Peserta Didik',employee:'Karyawan'}[u.role]||u.role)+' · '+u.id;
+    locate();
+  }
+
+  function locate(){
+    var box=$('s-geo');
+    if(!navigator.geolocation){
+      box.className='geo warn';
+      $('s-geo-t').textContent='GPS tidak tersedia';
+      $('s-geo-d').textContent='Perangkat tidak mendukung geolokasi. Lanjutkan untuk absen tanpa koordinat.';
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(function(pos){
+      var lat=pos.coords.latitude, lng=pos.coords.longitude;
+      state.geo={lat:lat,lng:lng,accuracy:pos.coords.accuracy};
+      var s=state.school;
+      var slat=s?Number(s.lat):schoolLat, slng=s?Number(s.lng):schoolLng;
+      var d=(slat&&slng)?dist(lat,lng,slat,slng):0;
+      var inside=d<=state.radius;
+      box.className='geo '+(inside?'ok':'bad');
+      $('s-geo-t').textContent=inside?'Lokasi tervalidasi':'Di luar radius sekolah';
+      $('s-geo-d').textContent=Math.round(d)+' m dari titik sekolah · radius '+state.radius+' m'+(pos.coords.accuracy?' · akurasi ±'+Math.round(pos.coords.accuracy)+' m':'');
+    },function(err){
+      box.className='geo warn';
+      $('s-geo-t').textContent='Lokasi belum terdeteksi';
+      $('s-geo-d').textContent=(err&&err.message)||'Izinkan akses lokasi untuk validasi GPS.';
+      setTimeout(locate,2500);
+    },{enableHighAccuracy:true,timeout:12000,maximumAge:20000});
+  }
+
+  $('s-confirm-btn').addEventListener('click', async function(){
+    clearMsg();
+    if(!state.geo){
+      var okRetry=confirm('Posisi GPS belum terkunci. Tetap lanjutkan absen?');
+      if(!okRetry) return;
+    }
+    var btn=this; btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Memproses…';
+    try{
+      var body={ token:state.token, mode:mode, method:'qr' };
+      if(state.geo){ body.lat=state.geo.lat; body.lng=state.geo.lng; body.gps_accuracy=state.geo.accuracy; }
+      // With a kiosk credential the server decides the direction itself and
+      // re-validates the rotating code, so both flows stay in one QR.
+      var url = kioskToken ? '/api/public/scan-attend' : '/api/public/scan/confirm';
+      if(kioskToken){ body={ token:kioskToken, lat:body.lat, lng:body.lng, accuracy:body.gps_accuracy }; }
+      var r=await fetch(url,{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
+      });
+      var j=await r.json();
+      if(!r.ok||!j.ok){
+        btn.disabled=false;
+        btn.innerHTML=mode==='checkin'?'Konfirmasi Absen Masuk':'Konfirmasi Absen Pulang';
+        return msg(esc(j.error||'Gagal mencatat kehadiran'),'err');
+      }
+      var rec=j.data.record;
+      // scan-attend reports the direction it actually recorded
+      if(j.data.mode) mode=j.data.mode;
+      var at=mode==='checkin'?rec.check_in_at:rec.check_out_at;
+      showDone(rec,at);
+    }catch(e){
+      btn.disabled=false;
+      btn.innerHTML=mode==='checkin'?'Konfirmasi Absen Masuk':'Konfirmasi Absen Pulang';
+      msg(esc(e.message),'err');
+    }
+  });
+
+  function showDone(rec,at){
+    $('s-confirm').style.display='none';
+    $('s-done').style.display='';
+    $('s-done-t').textContent = mode==='checkin' ? 'Absen masuk berhasil!' : 'Absen pulang berhasil!';
+    $('s-done-ico').textContent = mode==='checkin' ? '🎉' : '🏠';
+    var statusText = rec.status==='late' ? 'Anda tercatat hadir terlambat.' : 'Anda tercatat hadir tepat waktu.';
+    $('s-done-d').textContent = (mode==='checkin'
+      ? statusText+' Selamat belajar dan berkarya hari ini.'
+      : 'Terima kasih atas kerja keras Anda hari ini. Sampai jumpa esok!');
+    $('s-done-time').textContent=fmtTime(at);
+    $('s-done-date').textContent=fmtDate(at);
+  }
+
+  $('s-switch').addEventListener('click',function(){
+    try{ localStorage.removeItem('sas.scan.session'); }catch(e){}
+    state.token=''; state.user=null; state.geo=null;
+    $('s-confirm').style.display='none';
+    $('s-login').style.display='';
+    clearMsg();
+  });
+
+  $('s-again').addEventListener('click',function(){
+    if(window.opener) { try{ window.close(); }catch(e){} }
+    location.href='/mobile/';
+  });
+
+  /* resolve the scanned code for immediate feedback */
+  (async function(){
+    try{
+      var r=await fetch('/api/public/scan/resolve',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({mode:mode,code:schoolCode})
+      });
+      var j=await r.json();
+      if(j&&j.ok) msg('Kode QR valid — '+esc(j.data.message||''),'ok');
+      else if(j&&j.error) msg(esc(j.error),'err');
+    }catch(e){}
+  })();
+})();
+</script>
+</body>
+</html>

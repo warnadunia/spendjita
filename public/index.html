@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sistem Absensi Sekolah</title>
+<meta name="description" content="Sistem absensi digital sekolah: kode QR dinamis untuk absen masuk dan pulang guru, peserta didik dan karyawan.">
+<meta name="theme-color" content="#4f46e5">
+<link rel="icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--brand:#4f46e5;--accent:#f59e0b;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Inter',system-ui,sans-serif;color:var(--ink);
+    background:radial-gradient(1000px 560px at 10% -8%,rgba(99,102,241,.20),transparent 60%),
+               radial-gradient(820px 460px at 92% 4%,rgba(6,182,212,.16),transparent 60%),
+               #f1f5f9;min-height:100vh;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 20px 60px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:38px}
+  .brand{display:flex;align-items:center;gap:13px}
+  .brand img{width:48px;height:48px;border-radius:14px;object-fit:cover;background:#fff;box-shadow:0 6px 16px rgba(15,23,42,.1)}
+  .brand b{font-size:1.05rem;font-weight:800;letter-spacing:-.02em;display:block;line-height:1.2}
+  .brand span{font-size:.78rem;color:var(--muted)}
+  nav{display:flex;gap:8px;flex-wrap:wrap}
+  nav a{padding:9px 15px;border-radius:11px;font-size:.84rem;font-weight:700;text-decoration:none;transition:all .16s}
+  nav a:hover{transform:translateY(-1px)}
+  .a1{background:var(--brand);color:#fff;box-shadow:0 8px 20px -6px rgba(79,70,229,.7)}
+  .a2{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .a3{background:#fff;color:var(--ink);border:1px solid var(--line)}
+
+  .hero{text-align:center;margin-bottom:34px}
+  .pill{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);
+        padding:6px 14px;border-radius:99px;font-size:.76rem;font-weight:700;color:var(--muted);box-shadow:0 2px 6px rgba(15,23,42,.05)}
+  .pill i{width:7px;height:7px;border-radius:99px;background:var(--ok, #16a34a);animation:p 1.8s infinite}
+  @keyframes p{0%,100%{opacity:1}50%{opacity:.4}}
+  h1{font-size:clamp(1.9rem,5vw,3rem);font-weight:900;letter-spacing:-.04em;line-height:1.1;margin:18px 0 12px}
+  h1 em{font-style:normal;background:linear-gradient(120deg,#4f46e5,#06b6d4);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);font-size:1rem;max-width:600px;margin:0 auto;line-height:1.7}
+
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+  @media(max-width:880px){.cards{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 8px 22px rgba(15,23,42,.06);transition:transform .18s,box-shadow .18s}
+  .card:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(15,23,42,.1)}
+  .ico{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;margin-bottom:14px}
+  .card h3{font-size:1rem;margin-bottom:6px}
+  .card p{font-size:.85rem;color:var(--muted);line-height:1.65;margin-bottom:14px}
+  .card a{font-size:.83rem;font-weight:700;text-decoration:none}
+
+  .live{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  @media(max-width:640px){.live{grid-template-columns:repeat(2,1fr)}}
+  .lv{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center}
+  .lv b{display:block;font-size:1.6rem;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .lv span{font-size:.72rem;color:var(--muted);font-weight:600}
+
+  .qr-panel{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+  @media(max-width:880px){.qr-panel{grid-template-columns:1fr}}
+  .qbox{border-radius:24px;padding:26px;text-align:center;color:#fff;position:relative;overflow:hidden}
+  .qbox.in{background:linear-gradient(150deg,#4f46e5,#7c3aed 55%,#06b6d4 130%)}
+  .qbox.out{background:linear-gradient(150deg,#0f766e,#0ea5e9 55%,#6366f1 130%)}
+  .qbox::after{content:'';position:absolute;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,.09);bottom:-140px;right:-90px}
+  .qbox>*{position:relative;z-index:1}
+  .qtag{display:inline-block;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;
+        background:rgba(255,255,255,.2);padding:5px 13px;border-radius:99px;margin-bottom:12px}
+  .qbox h3{font-size:1.2rem;color:#fff;margin-bottom:14px}
+  .qframe{background:#fff;border-radius:18px;padding:11px;display:inline-block;box-shadow:0 14px 30px rgba(0,0,0,.25)}
+  .qframe img{width:190px;height:190px;display:block;border-radius:10px}
+  .qhint{font-size:.76rem;opacity:.9;margin-top:12px;line-height:1.6}
+
+  footer{text-align:center;color:var(--muted);font-size:.8rem;padding-top:18px;border-top:1px solid var(--line);line-height:1.8}
+  footer b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <img id="p-logo" src="/api/assets/default-logo.svg" alt="Logo sekolah">
+      <div>
+        <b id="p-name">Sekolah</b>
+        <span id="p-tag">Sistem Absensi Digital</span>
+      </div>
+    </div>
+    <nav>
+      <a class="a1" href="/mobile">Buka Aplikasi</a>
+      <a class="a2" href="/kiosk">Kios QR</a>
+      <a class="a3" href="/admin">Panel Admin</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <span class="pill"><i></i> <span id="p-live">Memuat…</span></span>
+    <h1>Absensi sekolah<br><em>lebih cepat dan akurat</em></h1>
+    <p class="sub" id="p-desc">Pindai kode QR di gerbang sekolah atau gunakan GPS untuk mencatat kehadiran masuk dan pulang secara real time.</p>
+  </div>
+
+  <div class="live" id="p-stats">
+    <div class="lv"><b>—</b><span>Sudah absen masuk</span></div>
+    <div class="lv"><b>—</b><span>Sudah absen pulang</span></div>
+    <div class="lv"><b>—</b><span>Terlambat</span></div>
+    <div class="lv"><b>—</b><span>Tingkat kehadiran</span></div>
+  </div>
+
+  <div class="qr-panel">
+    <div class="qbox in">
+      <div class="qtag">📥 Absen Masuk</div>
+      <h3>Pindai saat tiba</h3>
+      <div class="qframe"><img src="/api/public/qr/checkin.svg?size=380" alt="Kode QR absen masuk"></div>
+      <div class="qhint">Berlaku di dalam radius sekolah. Kode diperbarui otomatis.</div>
+    </div>
+    <div class="qbox out">
+      <div class="qtag">📤 Absen Pulang</div>
+      <h3>Pindai saat pulang</h3>
+      <div class="qframe"><img src="/api/public/qr/checkout.svg?size=380" alt="Kode QR absen pulang"></div>
+      <div class="qhint">Pindai sebelum meninggalkan area sekolah untuk mencatat kepulangan.</div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="ico" style="background:#eef2ff;color:#4f46e5">📱</div>
+      <h3>Aplikasi seluler</h3>
+      <p>Pasang di layar utama ponsel. Absen masuk, pulang, ajukan izin dan pantau riwayat kehadiran dalam satu genggaman.</p>
+      <a href="/mobile" style="color:#4f46e5">Buka aplikasi →</a>
+    </div>
+    <div class="card">
+      <div class="ico" style="background:#f0fdf4;color:#16a34a">📶</div>
+      <h3>GPS Lock &amp; selfie</h3>
+      <p>Kehadiran ekstrakurikuler dikunci dengan koordinat dan foto selfie, sehingga data benar-benar dapat dipertanggungjawabkan.</p>
+      <a href="/kiosk" style="color:#16a34a">Lihat kios QR →</a>
+    </div>
+    <div class="card">
+      <div class="ico" style="background:#fff7ed;color:#ea580c">🛡️</div>
+      <h3>Panel administrator</h3>
+      <p>Dasbor real time, laporan, persetujuan izin, kalender akademik, pengumuman dan manajemen pengguna di satu tempat.</p>
+      <a href="/admin" style="color:#ea580c">Masuk panel →</a>
+    </div>
+  </div>
+
+  <footer>
+    <b id="p-foot">Sekolah</b><br>
+    <span id="p-addr">—</span><br>
+    <span id="p-contact">—</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var MONTHS=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  var DAYS=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function set(id,v){var e=document.getElementById(id); if(e) e.textContent=v;}
+  fetch('/api/public/school').then(function(r){return r.json();}).then(function(j){
+    if(!j.ok||!j.data) return;
+    var sc=j.data.school||{}, st=j.data.settings||{};
+    if(st.theme_primary){
+      document.documentElement.style.setProperty('--brand',st.theme_primary);
+      var m=document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content',st.theme_primary);
+    }
+    set('p-name', st.school_name||sc.name||'Sekolah');
+    set('p-tag', st.app_tagline||'Sistem Absensi Digital');
+    set('p-foot', st.school_name||sc.name||'Sekolah');
+    set('p-desc', sc.description || 'Pindai kode QR di gerbang sekolah atau gunakan GPS untuk mencatat kehadiran masuk dan pulang secara real time.');
+    set('p-addr', sc.address||'');
+    set('p-contact', [sc.phone, sc.email].filter(Boolean).join(' · '));
+    var lg=document.getElementById('p-logo');
+    if(lg) lg.src = st.logo ? '/api/assets/logo.svg' : '/api/assets/default-logo.svg';
+    document.title = (st.app_name||sc.name||'Sistem Absensi Sekolah');
+  }).catch(function(){});
+
+  function loadLive(){
+    fetch('/api/public/live').then(function(r){return r.json();}).then(function(j){
+      if(!j.ok||!j.data) return;
+      var d=j.data;
+      var cells=document.querySelectorAll('#p-stats .lv b');
+      if(cells.length===4){
+        cells[0].textContent=d.checked_in;
+        cells[1].textContent=d.checked_out;
+        cells[2].textContent=d.late;
+        cells[3].textContent=d.rate+'%';
+      }
+      var dd=new Date(Date.now()+420*60000);
+      set('p-live','Hari ini, '+DAYS[dd.getUTCDay()]+' '+dd.getUTCDate()+' '+MONTHS[dd.getUTCMonth()]+' '+dd.getUTCFullYear()+' · '+d.checked_in+' sudah absen');
+    }).catch(function(){});
+  }
+  loadLive();
+  setInterval(loadLive, 20000);
+})();
+</script>
+</body>
+</html>

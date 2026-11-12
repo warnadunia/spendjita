@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Absensi Sekolah — Panel Administrator</title>
+<meta name="description" content="Panel administrator sistem absensi sekolah: dasbor real time, laporan, permohonan, kalender akademik, pengumuman, berita, ekstrakurikuler dan manajemen pengguna.">
+<link rel="icon" href="/api/assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/base.css">
+<link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body>
+
+<!-- ============================== LOGIN ============================== -->
+<div id="login-root"></div>
+
+<!-- =============================== APP =============================== -->
+<div id="app-root" class="app hidden">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <img class="sidebar-logo" id="side-logo" alt="Logo" src="/api/assets/default-logo.svg">
+      <div class="grow" style="min-width:0">
+        <div class="sidebar-name ellipsis" id="side-name">Absensi Sekolah</div>
+        <div class="sidebar-sub ellipsis" id="side-sub">Panel Administrator</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-foot">
+      <div class="side-user" id="side-user"></div>
+    </div>
+  </aside>
+
+  <div class="scrim" id="scrim"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn burger" id="btn-burger" aria-label="Buka menu">☰</button>
+      <div class="grow" style="min-width:0">
+        <div class="topbar-title ellipsis" id="page-title">Dasbor</div>
+        <div class="topbar-sub ellipsis" id="page-sub">Ringkasan kehadiran hari ini</div>
+      </div>
+      <div class="topbar-clock" id="top-clock">
+        <span id="clock-time">--:--:--</span>
+      </div>
+      <button class="icon-btn" id="btn-refresh" title="Muat ulang data" aria-label="Muat ulang">⟳</button>
+      <a class="icon-btn" href="/kiosk" target="_blank" rel="noopener" title="Buka halaman QR publik" aria-label="Kios QR">▣</a>
+      <button class="icon-btn" id="btn-logout" title="Keluar" aria-label="Keluar">⏻</button>
+    </header>
+    <main class="content" id="view"></main>
+  </div>
+</div>
+
+<script src="/admin/js/core.js"></script>
+<script src="/admin/js/list.js"></script>
+<script src="/admin/js/pages-a.js"></script>
+<script src="/admin/js/pages-b.js"></script>
+<script src="/admin/js/pages-c.js"></script>
+<script src="/admin/js/app.js"></script>
+</body>
+</html>
