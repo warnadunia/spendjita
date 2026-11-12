@@ -235,14 +235,19 @@
 
   function renderQR() {
     var img = document.getElementById('k-qr');
-    img.classList.add('stale');
-    img.src = '/api/public/kiosk/qr.svg?size=720&t=' + Date.now();
+    var l = document.getElementById('k-loading');
     img.onload = function () {
       img.classList.remove('stale');
       img.hidden = false;
-      var l = document.getElementById('k-loading');
-      if (l) l.hidden = true;
+      if (l) {
+        l.hidden = true;
+        l.style.display = 'none';
+      }
     };
+    img.onerror = function () {
+      if (l) l.innerHTML = '<span style="color:#ef4444;font-size:0.85rem">Gagal memuat gambar QR</span>';
+    };
+    img.src = '/api/public/kiosk/qr.svg?size=720&t=' + Date.now();
     document.getElementById('k-refresh').textContent =
       new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
@@ -320,13 +325,13 @@
     tickClock();
     setInterval(tickClock, 1000);
     setInterval(paintRotation, 250);
+    // Panggil token dan render QR satu kali
     pollToken();
-    // Re-render QR langsung saat awal
     renderQR();
-    setInterval(pollToken, 2000);
-    setInterval(function () {
-      if (state.misses && state.misses % 3 === 0) pollToken();
-    }, 3000);
+
+    // Karena QR harian (1x per hari), cek token cukup setiap 5 menit saja
+    setInterval(pollToken, 5 * 60 * 1000);
+
     // Re-render on demand (tap) — handy while testing.
     document.addEventListener('click', function () { renderQR(); });
     // Keep the screen awake on kiosk tablets when the browser allows it.
