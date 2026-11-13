@@ -6,6 +6,7 @@ const U = require('../util');
 const auth = require('../auth');
 const attendance = require('../attendance');
 const sched = require('../schedule');
+const storage = require('../storage');
 
 const router = express.Router();
 router.use(auth.requireAdmin);
@@ -195,9 +196,12 @@ function validateUser(body, existing) {
   return { errors, data };
 }
 
-router.post('/users', (req, res) => {
+router.post('/users', async (req, res) => {
   const { errors, data } = validateUser(req.body || {}, null);
   if (errors.length) return U.fail(res, errors.join(' '));
+  if (data.avatar && data.avatar.startsWith('data:')) {
+    data.avatar = await storage.uploadBase64(data.avatar, 'avatar');
+  }
   const body = req.body || {};
   const password = String(body.password || 'demo123');
   if (password.length < 6) return U.fail(res, 'Kata sandi minimal 6 karakter.');
@@ -213,11 +217,14 @@ router.post('/users', (req, res) => {
   return U.ok(res, { user: auth.publicUser(user), message: `Pengguna "${user.name}" berhasil ditambahkan.` });
 });
 
-router.put('/users/:id', (req, res) => {
+router.put('/users/:id', async (req, res) => {
   const u = db.findOne('users', (x) => x.id === req.params.id);
   if (!u) return U.fail(res, 'Pengguna tidak ditemukan.', 404);
   const { errors, data } = validateUser(req.body || {}, u);
   if (errors.length) return U.fail(res, errors.join(' '));
+  if (data.avatar && data.avatar.startsWith('data:')) {
+    data.avatar = await storage.uploadBase64(data.avatar, 'avatar');
+  }
   db.update('users', u.id, data);
   attendance.log('USER_UPDATE', { name: 'Administrator Sekolah' }, `Pengguna diperbarui: ${u.name}`);
   return U.ok(res, { user: auth.publicUser(db.findOne('users', (x) => x.id === u.id)), message: 'Pengguna berhasil diperbarui.' });
@@ -316,13 +323,16 @@ router.delete('/attendance/:id', (req, res) => {
   return U.ok(res, { message: 'Rekam kehadiran dihapus.' });
 });
 
-router.post('/attendance/:id/selfie', (req, res) => {
+router.post('/attendance/:id/selfie', async (req, res) => {
   const rec = db.findOne('attendance', (a) => a.id === req.params.id);
   if (!rec) return U.fail(res, 'Rekam kehadiran tidak ditemukan.', 404);
-  const selfie = String((req.body || {}).selfie || '');
-  if (selfie.length > 400000) return U.fail(res, 'Ukuran foto selfie terlalu besar.');
-  db.update('attendance', rec.id, { selfie });
-  return U.ok(res, { message: 'Foto selfie disimpan.' });
+  let selfie = String((req.body || {}).selfie || '');
+  if (selfie.length > 800000) return U.fail(res, 'Ukuran foto selfie terlalu besar.');
+  if (selfie) {
+    selfie = await storage.uploadBase64(selfie, 'selfie');
+  }
+  db.update('attendance', rec.id, { selfie, has_selfie: !!selfie });
+  return U.ok(res, { selfie, message: 'Foto selfie disimpan.' });
 });
 
 /* ------------------------------------------------------------------ *
@@ -583,7 +593,7 @@ const MAX_ATTACHMENT = 2.5 * 1024 * 1024; // 2.5 MB of base64 payload
  * validated server-side: the file must be a data: URL under the size cap and
  * the link must be an http(s) URL.
  */
-function sanitizeMedia(body, current) {
+async function sanitizeMedia(body, current) {
   const errors = [];
   const out = {};
   const att = body.attachment;
@@ -592,16 +602,20 @@ function sanitizeMedia(body, current) {
       out.attachment = null;
     } else if (att && typeof att === 'object' && typeof att.data === 'string') {
       const data = att.data;
-      if (!/^data:[\w.+-]+\/[\w.+-]+;base64,/.test(data)) {
-        errors.push('Lampiran harus berupa berkas data URL (base64).');
+      if (!/^data:[\w.+-]+\/[\w.+-]+;base64,/.test(data) && !data.startsWith('http://') && !data.startsWith('https://') && !data.startsWith('/uploads/')) {
+        errors.push('Lampiran harus berupa berkas data URL (base64) atau tautan URL.');
       } else if (data.length > MAX_ATTACHMENT) {
         errors.push('Ukuran lampiran maksimal 2 MB.');
       } else {
+        let storedData = data;
+        if (data.startsWith('data:')) {
+          storedData = await storage.uploadBase64(data, 'attachment');
+        }
         out.attachment = {
           name: String(att.name || 'lampiran').slice(0, 120),
           type: String(att.type || 'application/octet-stream').slice(0, 120),
           size: Number(att.size) || Math.round((data.length - data.indexOf(',') - 1) * 0.75),
-          data,
+          data: storedData,
         };
       }
     } else if (att && typeof att === 'string') {
@@ -633,11 +647,11 @@ router.get('/announcements', (req, res) => {
   return U.ok(res, { items: rows, counts: { all: db.count('announcements'), pinned: db.count('announcements', (a) => a.is_pinned) } });
 });
 
-router.post('/announcements', (req, res) => {
+router.post('/announcements', async (req, res) => {
   const body = req.body || {};
   const title = String(body.title || '').trim();
   if (title.length < 3) return U.fail(res, 'Judul pengumuman minimal 3 karakter.');
-  const media = sanitizeMedia(body, null);
+  const media = await sanitizeMedia(body, null);
   if (media.errors.length) return U.fail(res, media.errors.join(' '));
   const ann = db.insert('announcements', Object.assign({
     school_id: 'school_default',
@@ -658,11 +672,11 @@ router.post('/announcements', (req, res) => {
   return U.ok(res, { announcement: ann, message: 'Pengumuman berhasil diterbitkan.' });
 });
 
-router.put('/announcements/:id', (req, res) => {
+router.put('/announcements/:id', async (req, res) => {
   const a = db.findOne('announcements', (x) => x.id === req.params.id);
   if (!a) return U.fail(res, 'Pengumuman tidak ditemukan.', 404);
   const body = req.body || {};
-  const media = sanitizeMedia(body, a);
+  const media = await sanitizeMedia(body, a);
   if (media.errors.length) return U.fail(res, media.errors.join(' '));
   const patch = {};
   ['title', 'details', 'location', 'date', 'time', 'audience', 'author'].forEach((k) => {
@@ -694,12 +708,16 @@ router.get('/news', (req, res) => {
   return U.ok(res, { items: rows, counts: { all: db.count('news'), categories: [...new Set(db.all('news').map((n) => n.category))] } });
 });
 
-router.post('/news', (req, res) => {
+router.post('/news', async (req, res) => {
   const body = req.body || {};
   const title = String(body.title || '').trim();
   if (title.length < 3) return U.fail(res, 'Judul berita minimal 3 karakter.');
-  const media = sanitizeMedia(body, null);
+  const media = await sanitizeMedia(body, null);
   if (media.errors.length) return U.fail(res, media.errors.join(' '));
+  let cover = String(body.cover || '');
+  if (cover && cover.startsWith('data:')) {
+    cover = await storage.uploadBase64(cover, 'cover');
+  }
   const n = db.insert('news', Object.assign({
     school_id: 'school_default',
     title,
@@ -707,7 +725,7 @@ router.post('/news', (req, res) => {
     date: String(body.date || attendance.today()),
     time: String(body.time || '10:00').slice(0, 5),
     category: String(body.category || 'Umum'),
-    cover: String(body.cover || ''),
+    cover,
     author: String(body.author || 'Tim Komunikasi Sekolah'),
     views: 0,
     attachment: null,
@@ -719,16 +737,19 @@ router.post('/news', (req, res) => {
   return U.ok(res, { news: n, message: 'Berita berhasil diterbitkan.' });
 });
 
-router.put('/news/:id', (req, res) => {
+router.put('/news/:id', async (req, res) => {
   const n = db.findOne('news', (x) => x.id === req.params.id);
   if (!n) return U.fail(res, 'Berita tidak ditemukan.', 404);
   const body = req.body || {};
-  const media = sanitizeMedia(body, n);
+  const media = await sanitizeMedia(body, n);
   if (media.errors.length) return U.fail(res, media.errors.join(' '));
   const patch = {};
   ['title', 'details', 'date', 'time', 'category', 'cover', 'author'].forEach((k) => {
     if (U.has(body[k])) patch[k] = String(body[k]);
   });
+  if (patch.cover && patch.cover.startsWith('data:')) {
+    patch.cover = await storage.uploadBase64(patch.cover, 'cover');
+  }
   Object.assign(patch, media.out);
   db.update('news', n.id, patch);
   return U.ok(res, { news: db.findOne('news', (x) => x.id === n.id), message: 'Berita diperbarui.' });
@@ -923,7 +944,7 @@ router.get('/extracurriculars/:id/attendance', (req, res) => {
   return U.ok(res, { items: rows, date: req.query.date || '' });
 });
 
-router.post('/extracurriculars/:id/attendance', (req, res) => {
+router.post('/extracurriculars/:id/attendance', async (req, res) => {
   const ec = db.findOne('extracurriculars', (x) => x.id === req.params.id);
   if (!ec) return U.fail(res, 'Ekstrakurikuler tidak ditemukan.', 404);
   const body = req.body || {};
@@ -941,9 +962,12 @@ router.post('/extracurriculars/:id/attendance', (req, res) => {
   if (!inside && !s.allow_outside_confirm) {
     return U.fail(res, `Posisi berada ${U.round(dist, 0)} m dari lokasi kegiatan. Jangkauan: ${radius} m.`);
   }
-  const selfie = String(body.selfie || '');
+  let selfie = String(body.selfie || '');
   if (s.require_selfie && !selfie) return U.fail(res, 'Foto selfie wajib dipasangkan untuk ekstrakurikuler ini.');
-  if (selfie.length > 400000) return U.fail(res, 'Ukuran foto selfie terlalu besar.');
+  if (selfie.length > 800000) return U.fail(res, 'Ukuran foto selfie terlalu besar.');
+  if (selfie) {
+    selfie = await storage.uploadBase64(selfie, 'ec-selfie');
+  }
 
   const status = body.status === 'absent' ? 'absent' : 'present';
   const existing = db.findOne('ec_attendance', (a) => a.extracurricular_id === ec.id && a.user_id === u.id && a.date === date);

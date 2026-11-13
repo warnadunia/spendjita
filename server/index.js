@@ -12,6 +12,7 @@ const attendance = require('./attendance');
 const auth = require('./auth');
 const assets = require('./assets');
 const icons = require('./icons');
+const storage = require('./storage');
 
 const PORT = Number(process.env.PORT || 3000);
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -60,6 +61,7 @@ app.use(
     },
   })
 );
+app.use('/uploads', express.static(storage.UPLOADS_DIR, { maxAge: '7d' }));
 
 /* ----------------------------- assets ------------------------------ */
 app.get('/api/assets/avatar/:name.svg', (req, res) => {

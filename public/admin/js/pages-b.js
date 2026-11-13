@@ -28,9 +28,11 @@
     if (v < 1024 * 1024) return `${(v / 1024).toFixed(0)} KB`;
     return `${(v / (1024 * 1024)).toFixed(1)} MB`;
   }
-  function isImageAtt(a) { return !!(a && a.data && /^data:image\//i.test(a.data)); }
+  function isImageAtt(a) {
+    return !!(a && a.data && (/^data:image\//i.test(a.data) || (a.type && /^image\//i.test(a.type)) || /\.(png|jpe?g|webp|gif)(\?.*)?$/i.test(a.data || a.name || '')));
+  }
   function isPdfAtt(a) {
-    return !!(a && a.data && (/^data:application\/pdf/i.test(a.data) || /\.pdf$/i.test(a.name || '')));
+    return !!(a && a.data && (/^data:application\/pdf/i.test(a.data) || (a.type && /pdf/i.test(a.type)) || /\.pdf(\?.*)?$/i.test(a.data || a.name || '')));
   }
   function hostOf(url) {
     try { return new URL(String(url)).hostname.replace(/^www\./, ''); } catch (e) { return String(url || ''); }
@@ -106,10 +108,20 @@
     }
 
     api.body.querySelectorAll('[data-att="pick"]').forEach((b) => b.addEventListener('click', () => input.click()));
-    input.addEventListener('change', () => {
+    input.addEventListener('change', async () => {
       const f = input.files && input.files[0];
       if (!f) return;
       if (f.size > ATTACH_MAX) { C.toastErr('Terlalu besar', 'Ukuran lampiran maksimal 2 MB.'); input.value = ''; return; }
+      if (f.type && f.type.startsWith('image/')) {
+        try {
+          const compressed = await C.compressImage(f, 1200, 0.75);
+          state.data = { name: f.name, type: f.type, size: Math.round(compressed.length * 0.75), data: compressed };
+          state.changed = true;
+          paint();
+          input.value = '';
+          return;
+        } catch (e) { /* fallback to standard read */ }
+      }
       const rd = new FileReader();
       rd.onload = () => {
         state.data = { name: f.name, type: f.type || 'application/octet-stream', size: f.size, data: String(rd.result) };
@@ -1133,15 +1145,15 @@
             input.type = 'file';
             input.accept = 'image/*';
             input.capture = 'user';
-            input.addEventListener('change', () => {
+            input.addEventListener('change', async () => {
               const f = input.files && input.files[0];
               if (!f) return;
-              const rd = new FileReader();
-              rd.onload = () => {
-                selfie = String(rd.result);
+              try {
+                selfie = await C.compressImage(f, 480, 0.70);
                 api.el.querySelector('#ec-selfie-preview').innerHTML = `<img src="${selfie}" style="width:100%;border-radius:12px;display:block">`;
-              };
-              rd.readAsDataURL(f);
+              } catch (err) {
+                C.toastErr('Gagal', 'Tidak dapat memproses foto selfie.');
+              }
             });
             input.click();
           });
@@ -1637,18 +1649,15 @@
       });
       input.addEventListener('change', () => { const f = input.files[0]; if (f) uploadLogo(f); });
       function uploadLogo(f) {
-        if (f.size > 400000) return C.toastErr('Terlalu besar', 'Ukuran logo maksimal 300 KB.');
-        const rd = new FileReader();
-        rd.onload = async () => {
+        C.compressImage(f, 400, 0.85).then(async (dataUrl) => {
           try {
-            await C.api('/admin/settings/logo', { method: 'POST', body: { logo: String(rd.result) } });
-            preview.src = String(rd.result);
+            await C.api('/admin/settings/logo', { method: 'POST', body: { logo: dataUrl } });
+            preview.src = dataUrl;
             C.toastOk('Logo diperbarui', 'Manifest PWA dan ikon aplikasi ikut menyesuaikan.');
             const side = document.getElementById('side-logo');
             if (side) side.src = '/api/assets/logo.svg?v=' + Date.now();
           } catch (err) { C.toastErr('Gagal', err.message); }
-        };
-        rd.readAsDataURL(f);
+        }).catch(() => C.toastErr('Gagal', 'Tidak dapat memproses berkas logo.'));
       }
       root.querySelector('#logo-reset').addEventListener('click', async () => {
         try {

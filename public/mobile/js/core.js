@@ -122,9 +122,9 @@
   function hostOf(url) {
     try { return new URL(String(url)).hostname.replace(/^www\./, ''); } catch (e) { return String(url || ''); }
   }
-  /** True when a data URL attachment is a raster image we can preview inline. */
+  /** True when an attachment is a raster image we can preview inline. */
   function isImageAttachment(a) {
-    return !!(a && a.data && /^data:image\//i.test(a.data));
+    return !!(a && a.data && (/^data:image\//i.test(a.data) || (a.type && /^image\//i.test(a.type)) || /\.(png|jpe?g|webp|gif)(\?.*)?$/i.test(a.data || a.name || '')));
   }
   function debounce(fn, ms) {
     let t;

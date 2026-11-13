@@ -6,6 +6,7 @@ const U = require('../util');
 const auth = require('../auth');
 const attendance = require('../attendance');
 const sched = require('../schedule');
+const storage = require('../storage');
 
 const router = express.Router();
 router.use(auth.attachUser, auth.requireMember);
@@ -67,8 +68,13 @@ function ecToday(u) {
 }
 
 /* --------------------------- check in/out ------------------------- */
-router.post('/checkin', (req, res) => {
-  const result = attendance.checkIn(req.user, Object.assign({ method: (req.body || {}).method || 'gps' }, req.body || {}));
+router.post('/checkin', async (req, res) => {
+  const body = req.body || {};
+  let selfie = String(body.selfie || '');
+  if (selfie) {
+    selfie = await storage.uploadBase64(selfie, 'selfie');
+  }
+  const result = attendance.checkIn(req.user, Object.assign({ method: body.method || 'gps' }, body, { selfie }));
   if (!result.ok) {
     return U.fail(res, result.message || 'Gagal mencatat absensi masuk.', result.reason === 'out_of_range' ? 400 : 409);
   }
@@ -84,8 +90,13 @@ router.post('/checkin', (req, res) => {
   });
 });
 
-router.post('/checkout', (req, res) => {
-  const result = attendance.checkOut(req.user, Object.assign({ method: (req.body || {}).method || 'gps' }, req.body || {}));
+router.post('/checkout', async (req, res) => {
+  const body = req.body || {};
+  let selfie = String(body.selfie || '');
+  if (selfie) {
+    selfie = await storage.uploadBase64(selfie, 'selfie');
+  }
+  const result = attendance.checkOut(req.user, Object.assign({ method: body.method || 'gps' }, body, { selfie }));
   if (!result.ok) return U.fail(res, result.message || 'Gagal mencatat absensi pulang.', 400);
   return U.ok(res, { record: result.record, geo: result.geo, message: result.message });
 });
@@ -314,7 +325,7 @@ router.get('/extracurriculars/:id/attendance', (req, res) => {
   return U.ok(res, { items: rows });
 });
 
-router.post('/extracurriculars/:id/attendance', (req, res) => {
+router.post('/extracurriculars/:id/attendance', async (req, res) => {
   const ec = db.findOne('extracurriculars', (x) => x.id === req.params.id);
   if (!ec) return U.fail(res, 'Ekstrakurikuler tidak ditemukan.', 404);
   if (!sched.isAssigned(req.user, ec.id)) {
@@ -340,9 +351,12 @@ router.post('/extracurriculars/:id/attendance', (req, res) => {
   if (!inside && !s.allow_outside_confirm) {
     return U.fail(res, `Posisi berada ${U.round(dist, 0)} m dari lokasi kegiatan. Jangkauan: ${radius} m.`);
   }
-  const selfie = String(body.selfie || '');
+  let selfie = String(body.selfie || '');
   if (s.require_selfie && !selfie) return U.fail(res, 'Foto selfie wajib dipasangkan untuk ekstrakurikuler ini.');
-  if (selfie.length > 400000) return U.fail(res, 'Ukuran foto selfie terlalu besar.');
+  if (selfie.length > 800000) return U.fail(res, 'Ukuran foto selfie terlalu besar.');
+  if (selfie) {
+    selfie = await storage.uploadBase64(selfie, 'ec-selfie');
+  }
   const date = String(body.date || attendance.today());
   const status = body.status === 'absent' ? 'absent' : 'present';
   const existing = db.findOne('ec_attendance', (a) => a.extracurricular_id === ec.id && a.user_id === req.user.id && a.date === date);

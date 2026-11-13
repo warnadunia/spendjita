@@ -390,6 +390,15 @@
         okText: isEdit ? 'Simpan Perubahan' : 'Tambahkan',
         body: `
           <div class="form-grid">
+            <div class="field span-2 row gap-16 items-center" style="align-items:center;padding:12px 16px;background:var(--ink-50);border-radius:14px;border:1px solid var(--ink-200)">
+              <div id="u-av-preview">${C.avatarHTML(user || { name: 'Baru' }, 'avatar-lg')}</div>
+              <div class="grow" style="min-width:0">
+                <div class="semibold text-sm">Foto Profil (Avatar)</div>
+                <div class="hint text-xs">Otomatis dikompresi ke format ringan (maks 320 px).</div>
+              </div>
+              <button type="button" class="btn btn-sm" id="u-pick-av">${C.icon('camera', 14, 2.3)} Pilih Foto</button>
+              <input type="file" id="u-file-av" accept="image/*" style="display:none">
+            </div>
             <div class="field span-2">
               <label class="label">Nama lengkap <span class="req">*</span></label>
               <input class="input" name="name" data-autofocus placeholder="mis. Dra. Sugiarti, M.Pd" value="${C.esc(user ? user.name : '')}">
@@ -469,6 +478,22 @@
                    Tambahkan melalui halaman <b>Ekstrakurikuler</b> → <b>Anggota</b> atau <b>Pembina</b>.</div>`);
             }).catch(() => { const h = api.el.querySelector('#u-ec'); if (h) h.innerHTML = '<div class="hint">Tidak dapat memuat data ekstrakurikuler.</div>'; });
           }
+          let avatar = user ? user.avatar || '' : '';
+          const fInp = api.el.querySelector('#u-file-av');
+          if (fInp) {
+            api.el.querySelector('#u-pick-av').addEventListener('click', () => fInp.click());
+            fInp.addEventListener('change', async () => {
+              const f = fInp.files && fInp.files[0];
+              if (!f) return;
+              try {
+                avatar = await C.compressImage(f, 320, 0.70);
+                api.el.querySelector('#u-av-preview').innerHTML = `<img class="avatar avatar-lg" src="${avatar}" style="width:52px;height:52px;border-radius:50%;object-fit:cover">`;
+              } catch (err) {
+                C.toastErr('Gagal', 'Tidak dapat memproses foto avatar.');
+              }
+            });
+          }
+
           const sel = api.el.querySelector('[name="role"]');
           function sync() {
             const r = sel.value;
@@ -487,6 +512,7 @@
             if (!v.id_number || !v.id_number.trim()) return m.error('ID pengguna wajib diisi.');
             if (!isEdit && (!v.password || v.password.length < 6)) return m.error('Kata sandi minimal 6 karakter.');
             if (isEdit && v.password === '') delete v.password;
+            v.avatar = avatar;
             api.setBusy(true, isEdit ? 'Menyimpan…' : 'Menambahkan…');
             try {
               const res = isEdit

@@ -84,6 +84,8 @@ function checkIn(user, body) {
     check_out_dist: 0,
     work_hours: 0,
     note: '',
+    selfie: body.selfie || '',
+    has_selfie: !!body.selfie,
     created_at: inISO,
   };
   db.insert('attendance', rec);
@@ -104,14 +106,19 @@ function checkOut(user, body) {
   const outAt = new Date();
   const outISO = outAt.toISOString();
   const hours = U.round((outAt - new Date(rec.check_in_at)) / 3600000, 2);
-  db.update('attendance', rec.id, {
+  const patch = {
     check_out_at: outISO,
     check_out_method: String(body.method || 'gps').toLowerCase(),
     check_out_lat: lat,
     check_out_lng: lng,
     check_out_dist: geo ? U.round(geo.dist, 1) : 0,
     work_hours: hours > 0 ? hours : 0,
-  });
+  };
+  if (body.selfie) {
+    patch.selfie = body.selfie;
+    patch.has_selfie = true;
+  }
+  db.update('attendance', rec.id, patch);
   log('CHECK_OUT', user, `${String(body.method || 'gps').toUpperCase()} · ${hours} jam · ${geo ? U.round(geo.dist, 0) + ' m' : 'tanpa GPS'}`);
   return { ok: true, record: db.findOne('attendance', (a) => a.id === rec.id), geo, message: 'Absensi pulang berhasil direkam.' };
 }

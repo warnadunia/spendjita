@@ -5,6 +5,7 @@ const db = require('../db');
 const U = require('../util');
 const auth = require('../auth');
 const attendance = require('../attendance');
+const storage = require('../storage');
 
 const router = express.Router();
 
@@ -111,13 +112,15 @@ router.post('/change-password', auth.requireAuth, (req, res) => {
   return U.ok(res, { message: 'Kata sandi berhasil diperbarui.' });
 });
 
-router.put('/profile', auth.requireAuth, (req, res) => {
+router.put('/profile', auth.requireAuth, async (req, res) => {
   const body = req.body || {};
   const patch = {};
   ['name', 'phone', 'avatar', 'bio', 'gender', 'birth_date', 'home_address', 'guardian', 'guardian_phone'].forEach((k) => {
     if (U.has(body[k])) patch[k] = body[k];
   });
-  if (patch.avatar && patch.avatar.length > 200000) return U.fail(res, 'Ukuran avatar terlalu besar (maks 300 KB).');
+  if (patch.avatar && patch.avatar.startsWith('data:')) {
+    patch.avatar = await storage.uploadBase64(patch.avatar, 'avatar');
+  }
   db.update('users', req.user.id, patch);
   attendance.log('PROFILE_UPDATE', req.user, 'Biodata diperbarui.');
   return U.ok(res, { user: auth.publicUser(db.findOne('users', (u) => u.id === req.user.id)), message: 'Biodata berhasil diperbarui.' });

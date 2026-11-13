@@ -455,6 +455,47 @@
     });
   }
 
+  function compressImage(input, maxDim, quality) {
+    const dim = maxDim || 640;
+    const q = quality == null ? 0.70 : quality;
+    return new Promise((resolve, reject) => {
+      function processSrc(src) {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width;
+          let h = img.height;
+          if (w > dim || h > dim) {
+            if (w >= h) {
+              h = Math.round((h * dim) / w);
+              w = dim;
+            } else {
+              w = Math.round((w * dim) / h);
+              h = dim;
+            }
+          }
+          const cv = document.createElement('canvas');
+          cv.width = w;
+          cv.height = h;
+          const cx = cv.getContext('2d');
+          cx.drawImage(img, 0, 0, w, h);
+          resolve(cv.toDataURL('image/jpeg', q));
+        };
+        img.onerror = () => reject(new Error('Gagal memproses gambar.'));
+        img.src = src;
+      }
+      if (typeof input === 'string') {
+        processSrc(input);
+      } else if (input instanceof Blob || input instanceof File) {
+        const rd = new FileReader();
+        rd.onload = (e) => processSrc(e.target.result);
+        rd.onerror = () => reject(new Error('Gagal membaca berkas.'));
+        rd.readAsDataURL(input);
+      } else {
+        reject(new Error('Format berkas tidak didukung.'));
+      }
+    });
+  }
+
   global.Core = {
     store, api, ApiError, apiEvents,
     esc, icon, ICONS,
@@ -465,5 +506,6 @@
     initials, avatarHTML, debounce, num,
     ROLE_LABEL, ROLE_BADGE, STATUS_LABEL, STATUS_BADGE, REQ_STATUS_LABEL, REQ_STATUS_BADGE, REQ_TYPE_BADGE,
     formValues, setFormValues, pad, ID_MONTHS, ID_DAYS,
+    compressImage,
   };
 })(window);

@@ -30,3 +30,7 @@ Thumbs.db
 *.tmp
 *.bak
 
+# Local uploads
+data/uploads/*
+!data/uploads/.gitkeep
+

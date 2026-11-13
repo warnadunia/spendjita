@@ -570,6 +570,47 @@
     return 2 * R * Math.asin(Math.min(1, Math.sqrt(x)));
   }
 
+  function compressImage(input, maxDim, quality) {
+    const dim = maxDim || 480;
+    const q = quality == null ? 0.70 : quality;
+    return new Promise((resolve, reject) => {
+      function processSrc(src) {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width;
+          let h = img.height;
+          if (w > dim || h > dim) {
+            if (w >= h) {
+              h = Math.round((h * dim) / w);
+              w = dim;
+            } else {
+              w = Math.round((w * dim) / h);
+              h = dim;
+            }
+          }
+          const cv = document.createElement('canvas');
+          cv.width = w;
+          cv.height = h;
+          const cx = cv.getContext('2d');
+          cx.drawImage(img, 0, 0, w, h);
+          resolve(cv.toDataURL('image/jpeg', q));
+        };
+        img.onerror = () => reject(new Error('Gagal memproses gambar.'));
+        img.src = src;
+      }
+      if (typeof input === 'string') {
+        processSrc(input);
+      } else if (input instanceof Blob || input instanceof File) {
+        const rd = new FileReader();
+        rd.onload = (e) => processSrc(e.target.result);
+        rd.onerror = () => reject(new Error('Gagal membaca berkas.'));
+        rd.readAsDataURL(input);
+      } else {
+        reject(new Error('Format berkas tidak didukung.'));
+      }
+    });
+  }
+
   /* ============================ QR scanner ============================= */
   /* ===================== live selfie (camera only) ==================== */
   /**
@@ -687,7 +728,7 @@
           cx.translate(W, 0);      // mirror so it matches what the member saw
           cx.scale(-1, 1);
           cx.drawImage(video, 0, 0, W, H);
-          shot = cv.toDataURL('image/jpeg', 0.82);
+          shot = cv.toDataURL('image/jpeg', 0.70);
           prev.innerHTML = `<img src="${shot}" alt="Selfie">`;
           prev.classList.remove('hidden');
           camBox.classList.add('hidden');
@@ -1466,7 +1507,7 @@
 
   /** True when the attachment is a PDF — the usual case for a circular letter. */
   function isPdfAttachment(a) {
-    return !!(a && a.data && (/^data:application\/pdf/i.test(a.data) || /\.pdf$/i.test(a.name || '')));
+    return !!(a && a.data && (/^data:application\/pdf/i.test(a.data) || (a.type && /pdf/i.test(a.type)) || /\.pdf(\?.*)?$/i.test(a.data || a.name || '')));
   }
 
   /** Full attachment block: PDF gets a reader, images a preview, the rest a download row. */
@@ -2528,16 +2569,15 @@
         s2.el.querySelector('#bd-pick').addEventListener('click', () => {
           const inp = document.createElement('input');
           inp.type = 'file'; inp.accept = 'image/*';
-          inp.addEventListener('change', () => {
+          inp.addEventListener('change', async () => {
             const f = inp.files && inp.files[0];
             if (!f) return;
-            if (f.size > 300000) return toast('error', 'Terlalu besar', 'Ukuran foto maksimal 300 KB.');
-            const rd = new FileReader();
-            rd.onload = () => {
-              avatar = String(rd.result);
+            try {
+              avatar = await compressImage(f, 320, 0.70);
               s2.el.querySelector('#bd-av').innerHTML = M.avatarHTML({ name: u.name, avatar }, 'av-lg');
-            };
-            rd.readAsDataURL(f);
+            } catch (e) {
+              toast('error', 'Gagal', 'Tidak dapat memproses foto avatar.');
+            }
           });
           inp.click();
         });
